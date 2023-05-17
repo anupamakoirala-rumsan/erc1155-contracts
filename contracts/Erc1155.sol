@@ -11,7 +11,6 @@ contract Reward is ERC1155{
     using Math for uint256;
 
     Counters.Counter private _currentTokenId;
-    // uint256 private _currenTokenId = 0;
 
     string public name;
     string public symbol;
@@ -21,10 +20,11 @@ contract Reward is ERC1155{
     mapping(uint256 => address) public creators;
     mapping(address=>bool) public admin;
 
-    constructor(string memory _name, string memory _symbol) ERC1155(''){
+    constructor(string memory _name, string memory _symbol, string memory _uri) ERC1155(''){
         name = _name;
         symbol = _symbol;
         admin[msg.sender] = true;
+        _setURI(_uri);
     }
 
     modifier onlyAdmin(){
@@ -32,18 +32,18 @@ contract Reward is ERC1155{
         _;
     }
 
-
-    function createToken(uint256 _initialSupply, uint256 _tokenReserve, string memory uri) public onlyAdmin() returns(uint256) {
+    function createToken(uint256 _initialSupply, uint256 _tokenReserve) public onlyAdmin() returns(uint256) {
         uint256 _id = _currentTokenId.current();
         creators[_id] = msg.sender;
-        _mint(msg.sender, _id, _initialSupply,'');
         tokenSupply[_id] = _initialSupply;
         tokenReserve[_id] = _tokenReserve;
+        _currentTokenId.increment();
+        _mint(msg.sender, _id, _initialSupply,'');
         return _id;
     }
 
     function mintToken(address _to ,uint256 _id, uint256 _quantity) public{
-        require(tokenReserve[_id]>tokenSupply[_id],"Token limit hit");
+        require(tokenReserve[_id]>tokenSupply[_id] + _quantity,"Token limit hit");
         _mint(_to, _id, _quantity, '');
         tokenSupply[_id] = tokenSupply[_id]+_quantity;
     }
