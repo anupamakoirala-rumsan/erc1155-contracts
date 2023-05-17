@@ -43,9 +43,24 @@ contract Reward is ERC1155{
     }
 
     function mintToken(address _to ,uint256 _id, uint256 _quantity) public{
+        require(_exists(_id),"Token doesnot exists");
         require(tokenReserve[_id]>tokenSupply[_id] + _quantity,"Token limit hit");
-        _mint(_to, _id, _quantity, '');
         tokenSupply[_id] = tokenSupply[_id]+_quantity;
+        _mint(_to, _id, _quantity, '');
+    }
+
+    function batchMint(address _to, uint256[] memory _ids, uint256[] memory _quantity) public{
+        for(uint256 i =0; i< _ids.length; i++)
+        {   
+            require(_exists(i),"Token doesnot exists");
+            require(tokenReserve[i] > tokenSupply[i] + _quantity[i],"Token limited");
+            tokenSupply[i] = tokenSupply[i] + _quantity[i];
+        }
+        _mintBatch(_to, _ids, _quantity, '');
+    }
+
+    function _exists(uint256 _id) internal view returns(bool){
+        return creators[_id] != address(0);
     }
 }
 
