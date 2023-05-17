@@ -17,23 +17,33 @@ contract Reward is ERC1155{
     string public symbol;
 
     mapping(uint256=>uint256) public tokenSupply;
-
+    mapping(uint256=>uint256) public tokenReserve;
     mapping(uint256 => address) public creators;
+    mapping(address=>bool) public admin;
 
     constructor(string memory _name, string memory _symbol) ERC1155(''){
         name = _name;
         symbol = _symbol;
+        admin[msg.sender] = true;
     }
 
-    function createToken(uint256 _initialSupply, string memory uri) public returns(uint256){
+    modifier onlyAdmin(){
+        require(admin[msg.sender],"Not admin");
+        _;
+    }
+
+
+    function createToken(uint256 _initialSupply, uint256 _tokenReserve, string memory uri) public onlyAdmin() returns(uint256) {
         uint256 _id = _currentTokenId.current();
         creators[_id] = msg.sender;
         _mint(msg.sender, _id, _initialSupply,'');
         tokenSupply[_id] = _initialSupply;
+        tokenReserve[_id] = _tokenReserve;
         return _id;
     }
 
     function mintToken(address _to ,uint256 _id, uint256 _quantity) public{
+        require(tokenReserve[_id]>tokenSupply[_id],"Token limit hit");
         _mint(_to, _id, _quantity, '');
         tokenSupply[_id] = tokenSupply[_id]+_quantity;
     }
