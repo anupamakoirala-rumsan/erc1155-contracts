@@ -21,7 +21,7 @@ contract Reward is ERC1155, Pausable{
     mapping(uint256 => address) public creators;
     mapping(address=>bool) public admin;
 
-    constructor(string memory _name, string memory _symbol, string memory _uri) ERC1155(''){
+    constructor(string memory _name, string memory _symbol, string memory _uri) ERC1155(_uri){
         name = _name;
         symbol = _symbol;
         admin[msg.sender] = true;
