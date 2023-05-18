@@ -7,7 +7,8 @@ import '@openzeppelin/contracts/security/Pausable.sol';
 import '@openzeppelin/contracts/utils/Counters.sol';
 import '@openzeppelin/contracts/utils/math/Math.sol';
 
-contract Reward is ERC1155, Pausable{
+contract Reward is ERC1155, Pausable {
+     
     using Counters for Counters.Counter;
     using Math for uint256;
 
@@ -16,11 +17,21 @@ contract Reward is ERC1155, Pausable{
     string public name;
     string public symbol;
 
+    ///@notice mapping between token id and total token supply
     mapping(uint256=>uint256) public tokenSupply;
+    
+    ///@notice mapping between token id and total token reserved for given token id
     mapping(uint256=>uint256) public tokenReserve;
+
+    ///@notice mapping between token id and the address of the token
     mapping(uint256 => address) public creators;
+
+    ///@notice add given address as a admin
     mapping(address=>bool) public admin;
 
+    ///@param _name name of the contracts
+    ///@param _symbol symbol of the contracts
+    ///@param _uri base uri for the given nfts
     constructor(string memory _name, string memory _symbol, string memory _uri) ERC1155(_uri){
         name = _name;
         symbol = _symbol;
@@ -28,13 +39,19 @@ contract Reward is ERC1155, Pausable{
         _setURI(_uri);
     }
 
+    ///@notice modifier to check the admin role of the address
     modifier onlyAdmin(){
         require(admin[msg.sender],"Not admin");
         _;
     }
 
-    function createToken(uint256 _initialSupply, uint256 _tokenReserve) public onlyAdmin returns(uint256) {
-        uint256 _id = _currentTokenId.current();
+    ///@notice function to create new token 
+    ///@param _initialSupply initial supply of the token
+    ///@param _tokenReserve total mintable quantity for token
+    ///@return _id id of token created
+    ///@dev only admin can create the token
+    function createToken(uint256 _initialSupply, uint256 _tokenReserve) public onlyAdmin returns(uint256 _id) {
+         _id = _currentTokenId.current();
         creators[_id] = msg.sender;
         tokenSupply[_id] = _initialSupply;
         tokenReserve[_id] = _tokenReserve;
@@ -43,6 +60,11 @@ contract Reward is ERC1155, Pausable{
         return _id;
     }
 
+    ///@notice function to mint token
+    ///@param _to address to mint the given token id
+    ///@param _id token id to mint
+    ///@param _quantity total amount of token to be minted
+    ///@dev can be called by any one 
     function mintToken(address _to ,uint256 _id, uint256 _quantity) public whenNotPaused{
         require(_exists(_id),"Token doesnot exists");
         require(tokenReserve[_id]>tokenSupply[_id] + _quantity,"Token limit hit");
@@ -50,6 +72,11 @@ contract Reward is ERC1155, Pausable{
         _mint(_to, _id, _quantity, '');
     }
 
+    ///@notice function to mint batch token
+    ///@param _to address to mint the given token id
+    ///@param _ids token ids to mint
+    ///@param _quantity total amount of token to be minted
+    ///@dev can be called by any one
     function batchMint(address _to, uint256[] memory _ids, uint256[] memory _quantity) public whenNotPaused {
         for(uint256 i =0; i< _ids.length; i++)
         {   
@@ -60,14 +87,21 @@ contract Reward is ERC1155, Pausable{
         _mintBatch(_to, _ids, _quantity, '');
     }
 
-    function _exists(uint256 _id) internal view returns(bool){
+    ///@notice internal function to check the existence of the token
+    ///@param _id id to check existence
+    ///@return exist boolean value of existence
+    function _exists(uint256 _id) internal view returns(bool exist){
         return creators[_id] != address(0);
     }
 
+    ///@notice function to pause the minting feature
+    ///@dev only admin can call the function
     function pause() public onlyAdmin{
         _pause();
     }
 
+    ///@notice function to unpause the minting feature
+    ///@dev only admin can call the function
     function unpause() public whenPaused onlyAdmin{
         _unpause();
     }
